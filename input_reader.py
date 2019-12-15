@@ -47,3 +47,16 @@ def read_moons(filename):
     for line in read_lines(filename):
         m = regex.match(line)
         yield int(m.group('x')), int(m.group('y')), int(m.group('z'))
+
+
+def read_nanofactory_specs(filename):
+    for line in read_lines(filename):
+        # 7 A, 1 D => 1 E
+        arrow = line.find('=>')
+        inputs = [input.split()
+            for input in line[:arrow].split(',')]
+        out_amount, out_name = line[arrow + len('=>'):].split()
+        converted_in = [(int(amount), name) for amount, name in inputs]
+        converted_out = int(out_amount), out_name
+        yield converted_in, converted_out
+
