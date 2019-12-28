@@ -78,6 +78,15 @@ def read_nanofactory_specs(filename : FilenameOrTestInput
         yield converted_in, converted_out
 
 
+def read_labyrinth(filename : FilenameOrTestInput) -> Dict[Coord2D, str]:
+    rtn = {}
+    start = None
+    for y, line in enumerate(read_lines(filename)):
+        line = line.strip()
+        for x, ch in enumerate(line):
+            rtn[x, y] = ch
+    return rtn
+
 
 def read_digits(filename : FilenameOrTestInput) -> Iterable[int]:
     line = read_one_line(filename)

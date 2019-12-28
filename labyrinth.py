@@ -68,6 +68,9 @@ class AreaMap:
     def __init__(self, data : Dict[Coordinate, MapObject] = None):
         self.data = {} if data is None else data.copy()
 
+    def copy(self) -> 'AreaMap':
+        return AreaMap(self.data.copy())
+
     def peek(self, coord : Coordinate, *, default=None) -> MapObject:
         if coord in self.data:
             return self.data[coord]
