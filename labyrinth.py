@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Iterable, Dict, Tuple
+from typing import Iterable, Dict, Tuple, Any
 
 
 class Coordinate:
@@ -77,9 +77,11 @@ class AreaMap:
         return default
 
     def __getitem__(self, coord : Coordinate) -> MapObject:
+        assert isinstance(coord, Coordinate)
         return self.peek(coord, default=MapObject.WALL)
 
     def __setitem__(self, coord : Coordinate, value : MapObject):
+        assert isinstance(coord, Coordinate)
         self.data[coord] = value
 
     def __iter__(self) -> Iterable[Coordinate]:
@@ -123,3 +125,76 @@ def find_distances(area : AreaMap, start_coord : Coordinate) -> Dict[Coordinate,
             rtn[leaf] = distance
         leaf_coordinates = next_leaves
     return rtn
+
+
+class DistanceGraphNode:
+    def __init__(self, identifier):
+        self.identifier = identifier
+        self.neighbours = {}
+        self.data = None
+
+    def __repr__(self):
+        return f'<Node {self.identifier}>'
+
+    def __hash__(self):
+        return hash(self.identifier)
+
+    def __eq__(self, other):
+        return self.identifier == other.identifier
+
+    def add_neighbour(self, node, distance):
+        assert node not in self.neighbours
+        self.neighbours[node] = distance
+        node.neighbours[self] = distance
+
+
+class DistanceGraph:
+    _nodes : Dict[Any, DistanceGraphNode]
+
+    def __init__(self):
+        self._nodes = {}
+
+    def __bool__(self):
+        return bool(self._nodes)
+
+    def __iter__(self):
+        return iter(self._nodes)
+
+    def copy(self):
+        rtn = DistanceGraph()
+        for identifier, node in self._nodes.items():
+            rtn[identifier].data = node.data
+            for neighbour, distance in node.neighbours.items():
+                rtn[identifier].neighbours[rtn[neighbour.identifier]] = distance
+        return rtn
+
+    def __getitem__(self, identifier) -> DistanceGraphNode:
+        if identifier not in self._nodes:
+            self._nodes[identifier] = DistanceGraphNode(identifier)
+        return self._nodes[identifier]
+
+
+def find_all_distances(area : AreaMap, relevant_coordinates : Iterable[Coordinate]
+                       ) -> DistanceGraph:
+    coords = set(relevant_coordinates)
+
+    seen = set()
+    graph = DistanceGraph()
+
+    for coord in coords:
+        area2 = area.copy()
+        for coord2 in coords:
+            if coord != coord2:
+                area2[coord2] = MapObject.TARGET
+
+        distances = find_distances(area2, coord)
+
+        for coord2 in coords:
+            if coord != coord2:
+                c1c2 = frozenset([coord, coord2])
+                if c1c2 not in seen:
+                    seen.add(c1c2)
+                    if coord2 in distances:
+                        graph[coord].add_neighbour(graph[coord2], distances[coord2])
+
+    return graph

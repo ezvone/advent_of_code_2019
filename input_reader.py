@@ -82,7 +82,7 @@ def read_labyrinth(filename : FilenameOrTestInput) -> Dict[Coord2D, str]:
     rtn = {}
     start = None
     for y, line in enumerate(read_lines(filename)):
-        line = line.strip()
+        line = line.rstrip()
         for x, ch in enumerate(line):
             rtn[x, y] = ch
     return rtn
