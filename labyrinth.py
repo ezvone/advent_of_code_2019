@@ -1,5 +1,9 @@
+from typing import Iterable, Dict, Tuple, Any, Set, Union, List
 from enum import Enum
-from typing import Iterable, Dict, Tuple, Any
+from math import inf
+
+
+Number = Union[int, float]
 
 
 class Coordinate:
@@ -172,6 +176,39 @@ class DistanceGraph:
         if identifier not in self._nodes:
             self._nodes[identifier] = DistanceGraphNode(identifier)
         return self._nodes[identifier]
+
+    def find_shortest_path(self,
+                           node1 : DistanceGraphNode,
+                           node2 : DistanceGraphNode
+                           ) -> Tuple[List[DistanceGraphNode], Number]:
+        return self._find_shortest_path(node1, node2, set(), inf)
+
+    def _find_shortest_path(self,
+                            node1 : DistanceGraphNode,
+                            node2 : DistanceGraphNode,
+                            forbidden_nodes : Set[DistanceGraphNode],
+                            distance_limit : Number
+                            ) -> Tuple[List[DistanceGraphNode], Number]:
+        forbidden2 = forbidden_nodes | {node1}
+        best_path = []
+        best_distance = distance_limit
+
+        for n, d in node1.neighbours.items():
+            if n in forbidden_nodes:
+                continue
+            if d >= best_distance:
+                continue
+            if n is node2:
+                subpath, subdistance = [n], 0
+            else:
+                subpath, subdistance = self._find_shortest_path(
+                    n, node2, forbidden2, best_distance - d)
+
+            if subpath and d + subdistance < best_distance:
+                best_path = subpath
+                best_distance = d + subdistance
+
+        return best_path, best_distance
 
 
 def find_all_distances(area : AreaMap, relevant_coordinates : Iterable[Coordinate]
