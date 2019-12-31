@@ -1,6 +1,7 @@
 from typing import Iterable, Dict, Tuple, Any, Set, Union, List
 from enum import Enum
 from math import inf
+from itertools import count
 
 
 Number = Union[int, float]
@@ -131,6 +132,88 @@ def find_distances(area : AreaMap, start_coord : Coordinate) -> Dict[Coordinate,
     return rtn
 
 
+class DistanceGraphBase:
+
+    def iter_neighbouring_nodes(self, n) -> Iterable[Tuple[Any, Number]]:
+        raise NotImplementedError
+
+    def find_shortest_path(self, node1 : Any, node2 : Any,
+                           distance_limit : Number = inf
+                           ) -> Tuple[List, Number]:
+        return self._find_shortest_path(node1, node2, set(), distance_limit)
+
+    def _find_shortest_path(self, node1 : Any, node2 : Any,
+                            forbidden_nodes : Set, distance_limit : Number
+                            ) -> Tuple[List, Number]:
+        forbidden2 = forbidden_nodes | {node1}
+        best_path = []
+        best_distance = distance_limit
+
+        neighbours = list(self.iter_neighbouring_nodes(node1))
+        for n, d in neighbours:
+            if n in forbidden_nodes:
+                continue
+            if d >= best_distance:
+                continue
+            if n == node2:
+                subpath, subdistance = [], 0
+            else:
+                subpath, subdistance = self._find_shortest_path(
+                    n, node2, forbidden2, best_distance - d)
+
+            if d + subdistance < best_distance:
+                best_path = [n] + subpath
+                best_distance = d + subdistance
+
+        return best_path, best_distance
+
+
+class SymmetricalGraphMixin(DistanceGraphBase):
+
+    def find_shortest_path_two_ways(self, node1 : Any, node2 : Any):
+        explore1 = self._explore_iteratively(node1)
+        explore2 = self._explore_iteratively(node2)
+        while True:
+            explored1 = next(explore1)
+            explored2 = next(explore2)
+            overlap = set(explored1).intersection(explored2)
+            if overlap:
+                best = min(overlap, key=lambda n: explored1[n]+explored2[n])
+                distance = explored1[best] + explored2[best]
+                return distance
+
+    def _explore_iteratively(self, start_node : Any):
+        explored_nodes = {start_node: 0}
+        finished_nodes = set()
+        for i in count(1):
+            max_distance = 50 * i
+            if finished_nodes.issuperset(explored_nodes):
+                break
+            for node, d in list(explored_nodes.items()):
+                if node not in finished_nodes:
+                    self._explore(node, explored_nodes, finished_nodes,
+                                  d, max_distance)
+            yield explored_nodes
+
+    def _explore(self, node : Any,
+                 explored_nodes : Dict[Any, int],
+                 finished_nodes : Set[Any],
+                 current_distance : int = 0,
+                 max_distance : Number = inf):
+        finished = True
+        for n2, d in self.iter_neighbouring_nodes(node):
+            total_distance = current_distance + d
+            if total_distance > max_distance:
+                finished = False
+                continue
+            if explored_nodes.get(n2, inf) <= total_distance:
+                continue
+            explored_nodes[n2] = total_distance
+            self._explore(n2, explored_nodes, finished_nodes, total_distance, max_distance)
+        if finished:
+            finished_nodes.add(node)
+
+
 class DistanceGraphNode:
     def __init__(self, identifier):
         self.identifier = identifier
@@ -152,7 +235,7 @@ class DistanceGraphNode:
         node.neighbours[self] = distance
 
 
-class DistanceGraph:
+class DistanceGraph(SymmetricalGraphMixin, DistanceGraphBase):
     _nodes : Dict[Any, DistanceGraphNode]
 
     def __init__(self):
@@ -163,6 +246,9 @@ class DistanceGraph:
 
     def __iter__(self):
         return iter(self._nodes)
+
+    def iter_neighbouring_nodes(self, n):
+        return n.neighbours.items()
 
     def copy(self):
         rtn = DistanceGraph()
@@ -176,39 +262,6 @@ class DistanceGraph:
         if identifier not in self._nodes:
             self._nodes[identifier] = DistanceGraphNode(identifier)
         return self._nodes[identifier]
-
-    def find_shortest_path(self,
-                           node1 : DistanceGraphNode,
-                           node2 : DistanceGraphNode
-                           ) -> Tuple[List[DistanceGraphNode], Number]:
-        return self._find_shortest_path(node1, node2, set(), inf)
-
-    def _find_shortest_path(self,
-                            node1 : DistanceGraphNode,
-                            node2 : DistanceGraphNode,
-                            forbidden_nodes : Set[DistanceGraphNode],
-                            distance_limit : Number
-                            ) -> Tuple[List[DistanceGraphNode], Number]:
-        forbidden2 = forbidden_nodes | {node1}
-        best_path = []
-        best_distance = distance_limit
-
-        for n, d in node1.neighbours.items():
-            if n in forbidden_nodes:
-                continue
-            if d >= best_distance:
-                continue
-            if n is node2:
-                subpath, subdistance = [n], 0
-            else:
-                subpath, subdistance = self._find_shortest_path(
-                    n, node2, forbidden2, best_distance - d)
-
-            if subpath and d + subdistance < best_distance:
-                best_path = subpath
-                best_distance = d + subdistance
-
-        return best_path, best_distance
 
 
 def find_all_distances(area : AreaMap, relevant_coordinates : Iterable[Coordinate]
