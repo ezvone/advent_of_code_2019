@@ -9,7 +9,7 @@ class DealIntoNewStack:
         return self.num_cards - previous_index - 1
 
     def get_previous_index(self, next_index):
-        return self.num_cards - next_index - 1
+        return (-next_index - 1) % self.num_cards
 
 
 class Cut:
@@ -28,13 +28,7 @@ class DealWithIncrement:
     def __init__(self, num_cards, step):
         self.num_cards = num_cards
         self.step = step
-
-        for i in range(1, step * num_cards, num_cards):
-            if i % step == 0:
-                self.xstep = i // step
-                break
-        else:
-            raise Exception('Failed to find xstep')
+        self.xstep = pow(self.step, -1, self.num_cards)
 
     def get_next_index(self, previous_index):
         return (self.step * previous_index) % self.num_cards
