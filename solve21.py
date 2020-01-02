@@ -15,7 +15,6 @@ class SpringDroidProgrammer:
         return rtn
 
     def write_command(self, command):
-        print(f'>{command}')
         for ch in command:
             self.ic.communicate(ord(ch))
         self.ic.communicate(10)
@@ -25,27 +24,56 @@ class SpringDroidProgrammer:
             ch = self.ic.communicate()
             if ch is not None:
                 if ch < 256:
-                    print(chr(ch), end='')
+                    pass
                 else:
                     return ch
-        print(' ABCDEFGHI')
 
+    def program(self, source):
+        self.read_prompt()
+        for line in source.splitlines():
+            if sline := line.strip():
+                self.write_command(' '.join(sline.split()))
 
 
 def puzzle1():
     programmer = SpringDroidProgrammer()
-    print(programmer.read_prompt())
-    programmer.write_command('NOT A J')
-    programmer.write_command('NOT B T')
-    programmer.write_command('OR T J')
-    programmer.write_command('NOT C T')
-    programmer.write_command('OR T J')
-    programmer.write_command('AND D J')
-    programmer.write_command('WALK')
+    programmer.program('''
+    NOT A J
+    NOT B T
+    OR T J
+    NOT C T
+    OR T J
+    AND D J
+    WALK
+    ''')
     return programmer.read_output()
 
+
+def puzzle2():
+    programmer = SpringDroidProgrammer()
+    programmer.program('''
+    NOT	G	T
+    NOT	F	J
+    OR	T	J
+    OR	E	J
+    NOT	C	T
+    AND	T	J
+    NOT	B	T
+    OR	T	J
+    NOT	H	T
+    NOT	T	T
+    OR	E	T
+    AND	T	J
+    AND	D	J
+    NOT	A	T
+    OR	T	J
+    RUN
+    ''')
+    return programmer.read_output()
 
 
 if __name__ == "__main__":
     assert puzzle1() == 19353074
+    assert puzzle2() == 1147582556
+    print('OK.')
 
