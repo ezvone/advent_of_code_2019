@@ -91,3 +91,15 @@ def read_labyrinth(filename : FilenameOrTestInput) -> Dict[Coord2D, str]:
 def read_digits(filename : FilenameOrTestInput) -> Iterable[int]:
     line = read_one_line(filename)
     return (int(x) for x in line)
+
+
+def read_shuffle_algorithm(filename: FilenameOrTestInput):
+    for line in read_lines(filename):
+        if line == 'deal into new stack':
+            yield 'reverse', None
+        elif line.startswith('cut '):
+            yield 'cut', int(line[len('cut '):])
+        elif line.startswith('deal with increment '):
+            yield 'deal', int(line[len('deal with increment '):])
+        else:
+            assert 0, f'bad input: {line!r}'
