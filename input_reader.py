@@ -96,10 +96,10 @@ def read_digits(filename : FilenameOrTestInput) -> Iterable[int]:
 def read_shuffle_algorithm(filename: FilenameOrTestInput):
     for line in read_lines(filename):
         if line == 'deal into new stack':
-            yield 'reverse', None
+            yield 'deal into new stack', None
         elif line.startswith('cut '):
             yield 'cut', int(line[len('cut '):])
         elif line.startswith('deal with increment '):
-            yield 'deal', int(line[len('deal with increment '):])
+            yield 'deal with increment', int(line[len('deal with increment '):])
         else:
             assert 0, f'bad input: {line!r}'
