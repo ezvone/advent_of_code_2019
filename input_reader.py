@@ -19,7 +19,7 @@ def read_lines(filename : FilenameOrTestInput) -> Iterable[str]:
         yield from filename.contents.splitlines()
         return
 
-    path = pathlib.Path(__file__).parent / filename
+    path = pathlib.Path(__file__).parent / 'data' / filename
     with path.open('rt') as f:
         for line in f:
             yield line.strip('\n')
