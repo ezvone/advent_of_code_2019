@@ -1,77 +1,69 @@
 from input_reader import read_shuffle_algorithm, TestInput
 
 
-class DealIntoNewStack:
-    def __init__(self, num_cards):
-        self.num_cards = num_cards
+class Technique:
+    def __init__(self, modulo, factor=1, addend=0):
+        self.factor = factor
+        self.addend = addend
+        self.modulo = modulo
 
-    def get_next_index(self, previous_index):
-        return self.num_cards - previous_index - 1
+    def calculate(self, x):
+        return (self.factor * x + self.addend) % self.modulo
 
-    def get_previous_index(self, next_index):
-        return (-next_index - 1) % self.num_cards
+    def inverse(self):
+        inv_factor = pow(self.factor, -1, self.modulo)
+        return Technique(self.modulo, inv_factor, -self.addend*inv_factor)
 
+    def chain(self, t2):
+        if self.modulo != t2.modulo:
+            raise ValueError("Only techniques with the same modulo can be chained")
 
-class Cut:
-    def __init__(self, num_cards, n):
-        self.num_cards = num_cards
-        self.n = n
+        return Technique(
+            self.modulo,
+            self.factor * t2.factor % self.modulo,
+            (self.addend * t2.factor + t2.addend) % self.modulo)
 
-    def get_next_index(self, previous_index):
-        return (previous_index - self.n) % self.num_cards
+    def pow(self, n):
+        assert n >= 1
+        if n == 1:
+            return self
 
-    def get_previous_index(self, next_index):
-        return (next_index + self.n) % self.num_cards
-
-
-class DealWithIncrement:
-    def __init__(self, num_cards, step):
-        self.num_cards = num_cards
-        self.step = step
-        self.xstep = pow(self.step, -1, self.num_cards)
-
-    def get_next_index(self, previous_index):
-        return (self.step * previous_index) % self.num_cards
-
-    def get_previous_index(self, next_index):
-        return (self.xstep * next_index) % self.num_cards
+        squared = Technique(self.modulo,
+                            pow(self.factor, 2, self.modulo),
+                            (self.factor + 1) * self.addend % self.modulo)
+        if n % 2 == 0:
+            return squared.pow(n // 2)
+        else:
+            return squared.pow(n // 2).chain(self)
 
 
 class Shuffler:
-    def __init__(self, num_cards):
+    def __init__(self, num_cards, repetitions=1):
         self.num_cards = num_cards
         self.definition = list(read_shuffle_algorithm('day22input.txt'))
-        self.techniques = [
-            self._get_technique(num_cards, technique_name, n)
-            for technique_name, n in self.definition]
+        self.technique = Technique(self.num_cards)
+        for technique_name, n in self.definition:
+            technique = self._get_technique(num_cards, technique_name, n)
+            self.technique = self.technique.chain(technique)
+
+        self.technique = self.technique.pow(repetitions)
 
     @staticmethod
     def _get_technique(num_cards, technique_name, n):
         if technique_name == 'deal into new stack':
-            return DealIntoNewStack(num_cards)
+            return Technique(num_cards, -1, -1)
         elif technique_name == 'cut':
-            return Cut(num_cards, n)
+            return Technique(num_cards, 1, -n)
         elif technique_name == 'deal with increment':
-            return DealWithIncrement(num_cards, n)
+            return Technique(num_cards, n, 0)
         else:
             raise Exception(f'Unknown techinque name {technique_name}')
 
-    def shuffle(self):
-        deck = list(range(self.num_cards))
-        for technique in self.techniques:
-            deck = [deck[technique.get_previous_index(i)]
-                    for i in range(self.num_cards)]
-        return deck
-
     def track_one_card(self, card_index):
-        for technique in self.techniques:
-            card_index = technique.get_next_index(card_index)
-        return card_index
+        return self.technique.calculate(card_index)
 
     def back_track_one_card(self, card_index):
-        for technique in reversed(self.techniques):
-            card_index = technique.get_previous_index(card_index)
-        return card_index
+        return self.technique.inverse().calculate(card_index)
 
 
 def puzzle1():
@@ -79,6 +71,12 @@ def puzzle1():
     return shuffler.track_one_card(2019)
 
 
+def puzzle2():
+    shuffler = Shuffler(119315717514047, 101741582076661)
+    return shuffler.back_track_one_card(2020)
+
 
 if __name__ == "__main__":
     assert puzzle1() == 1252
+    assert puzzle2() == 46116012647793
+    print('OK.')
