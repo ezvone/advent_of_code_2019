@@ -2,7 +2,7 @@ from itertools import chain, product, count
 
 
 from input_reader import read_comma_separated_integers
-from intcode import IntcodeRunner
+from intcode import Intcode
 
 
 class TractorBeamTester:
@@ -20,10 +20,11 @@ class TractorBeamTester:
         assert 0 <= x <= self.max_coord
         assert 0 <= y <= self.max_coord
 
-        ic = IntcodeRunner(self.opcodes)
-        ic.communicate(x)
-        ic.communicate(y)
-        return {1: True, 0: False}[ic.communicate()]
+        ic = Intcode(self.opcodes)
+        ic.start()
+        ic.write_input(x)
+        ic.write_input(y)
+        return {1: True, 0: False}[ic.read_output()]
 
     def get_first_y(self, x, expected_value, start_y=0, max_error=3):
         y = max(0, min(start_y, self.max_coord))

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from intcode import IntcodeRunner
+from intcode import Intcode
 from input_reader import read_comma_separated_integers
 
 
@@ -29,22 +29,26 @@ class Joystick(Enum):
 
 class ArcadeCabinet:
     def __init__(self):
-        self.ic = IntcodeRunner(read_comma_separated_integers('day13input.txt'))
+        self.ic = Intcode(read_comma_separated_integers('day13input.txt'))
         self.screen = {}
         self.score = 0
 
     def set_number_of_quarters(self, value):
-        self.ic.ic.opcodes[0] = value
+        self.ic.memory[0] = value
 
     def read_tile_from_ic(self):
         data = []
         while len(data) < 3 and not self.ic.finished:
-            if None is not (value := self.ic.communicate(self.joystick_value)):
-                data.append(value)
+            if self.ic.requires_input:
+                self.ic.write_input(self.joystick_value)
+            else:
+                data.append(self.ic.read_output())
+
         if len(data) == 3:
             return tuple(data)
 
     def run(self):
+        self.ic.start()
         while None is not (tile := self.read_tile_from_ic()):
             x, y, tile_id = tile
             if (x, y) == (-1, 0):

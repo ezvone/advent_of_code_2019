@@ -4,13 +4,16 @@ from input_reader import read_comma_separated_integers
 
 class BoostProgram:
     def __init__(self):
-        ic = Intcode(read_comma_separated_integers('day9input.txt'))
-        self.gen = ic.run_generator()
-        next(self.gen)
+        self.ic = Intcode(read_comma_separated_integers('day9input.txt'))
+
+    def _read_all(self):
+        while not self.ic.finished:
+            yield self.ic.read_output()
 
     def run(self, input_value):
-        self.gen.send(input_value)
-        return list(self.gen)
+        self.ic.start()
+        self.ic.write_input(input_value)
+        return list(self._read_all())
 
 
 def puzzle1():
@@ -26,4 +29,5 @@ def puzzle2():
 if __name__ == "__main__":
     assert puzzle1() == [3780860499]
     assert puzzle2() == [33343]
+    print('OK.')
 

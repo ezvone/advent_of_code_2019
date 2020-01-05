@@ -1,6 +1,6 @@
 from enum import Enum
 
-from intcode import IntcodeRunner
+from intcode import Intcode
 from input_reader import read_comma_separated_integers
 from labyrinth import MapObject, AreaMap, Coordinate, Direction, find_distances
 
@@ -14,7 +14,8 @@ class Status(Enum):
 
 class DroidRemote:
     def __init__(self):
-        self.ic = IntcodeRunner(read_comma_separated_integers('day15input.txt'))
+        self.ic = Intcode(read_comma_separated_integers('day15input.txt'))
+        self.ic.start()
 
     def move(self, direction):
         command = {
@@ -23,8 +24,8 @@ class DroidRemote:
             Direction.WEST: 3,
             Direction.EAST: 4
         }[direction]
-        self.ic.communicate(command)
-        return Status(self.ic.communicate())
+        self.ic.write_input(command)
+        return Status(self.ic.read_output())
 
 
 def get_available_directions(area, coord):

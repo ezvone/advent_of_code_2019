@@ -8,10 +8,11 @@ class GravityAssistProgram:
 
     def run(self, noun, verb):
         c = Intcode(self._codes)
-        c.opcodes[1] = noun
-        c.opcodes[2] = verb
-        c.run()
-        return c.opcodes[0]
+        c.memory[1] = noun
+        c.memory[2] = verb
+        c.start()
+        assert c.finished
+        return c.memory[0]
 
 
 def puzzle1():

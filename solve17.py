@@ -1,7 +1,7 @@
 from itertools import product
 
 from input_reader import read_comma_separated_integers
-from intcode import IntcodeRunner
+from intcode import Intcode
 
 
 class AftScaffoldingControlAndInformationInterface:
@@ -10,12 +10,13 @@ class AftScaffoldingControlAndInformationInterface:
         if wake_vacuum_robot_up:
             assert opcodes[0] == 1
             opcodes[0] = 2
-        self.ic = IntcodeRunner(opcodes)
+        self.ic = Intcode(opcodes)
+        self.ic.start()
 
     def scan_cameras(self):
         line = []
         while True:
-            while (ch := self.ic.communicate()) != 10:
+            while (ch := self.ic.read_output()) != 10:
                 if ch is None:
                     break
                 line.append(chr(ch))
@@ -41,16 +42,14 @@ class AftScaffoldingControlAndInformationInterface:
 
     def read_line(self):
         rtn = []
-        while (ch := self.ic.communicate()) != 10:
+        while (ch := self.ic.read_output()) != 10:
             rtn.append(chr(ch))
         return ''.join(rtn)
 
     def provide_input(self, s):
         for ch in s:
-            if out := self.ic.communicate(ord(ch)):
-                print(chr(out))
-        if out := self.ic.communicate(10):
-            print(chr(out))
+            self.ic.write_input(ord(ch))
+        self.ic.write_input(10)
 
     def find_intersections(self):
         scaffolds = list(self.scan_cameras())
@@ -198,11 +197,11 @@ def puzzle2():
     main, a, b, c = [routine for routine in caculate_movement_routines(moves)]
     ascii.provide_routines(main, a, b, c)
     while not ascii.ic.finished:
-        ch = ascii.ic.communicate()
-        if ch is not None and ch < 256:
+        ch = ascii.ic.read_output()
+        if ch < 256:
             #print(chr(ch), end='')
             pass
-        elif ch is not None:
+        else:
             return ch
 
 

@@ -1,17 +1,22 @@
 from itertools import permutations
 
-from intcode import IntcodeRunner
+from intcode import Intcode
 from input_reader import read_comma_separated_integers
 
 
-class Amplifier(IntcodeRunner):
+class Amplifier:
     def __init__(self, phase_setting):
-        super().__init__(read_comma_separated_integers('day7input.txt'))
-        self.communicate(phase_setting)
+        self.ic = Intcode(read_comma_separated_integers('day7input.txt'))
+        self.ic.start()
+        self.ic.write_input(phase_setting)
 
     def run(self, input_value):
-        self.communicate(input_value)
-        return self.communicate()
+        self.ic.write_input(input_value)
+        return self.ic.read_output()
+
+    @property
+    def finished(self):
+        return self.ic.finished
 
 
 def get_amplification_circuit_thruster_value(phase_settings):
@@ -21,9 +26,9 @@ def get_amplification_circuit_thruster_value(phase_settings):
     while True:
         for amplifier in amplifiers:
             value = amplifier.run(value)
-            if amplifier.finished:
-                return thruster_value
         thruster_value = value
+        if amplifier.finished:
+            return thruster_value
 
 
 def find_max_thrust(phase_settings_pool):

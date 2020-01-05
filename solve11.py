@@ -7,9 +7,8 @@ class EmergencyHulPaintingProgram:
     DIRECTIONS = (0,1), (1,0), (0,-1), (-1,0)  # up, right, down, left
 
     def __init__(self, hul: dict):
-        ic = Intcode(read_comma_separated_integers('day11input.txt'))
-        self.run_gen = ic.run_generator()
-        next(self.run_gen)
+        self.ic = Intcode(read_comma_separated_integers('day11input.txt'))
+        self.ic.start()
 
         self.hul = hul
         self.position = 0, 0
@@ -17,9 +16,10 @@ class EmergencyHulPaintingProgram:
 
     def _read_value(self):
         while True:
-            value = self.run_gen.send(self.hul.get(self.position, 0))
-            if value is not None:
-                return value
+            if self.ic.requires_input:
+                self.ic.write_input(self.hul.get(self.position, 0))
+            else:
+                return self.ic.read_output()
 
     def _rotate(self, value):
         rotation = 1 if value else -1
@@ -29,14 +29,11 @@ class EmergencyHulPaintingProgram:
         self.position = x + dx, y + dy
 
     def paint(self):
-        while True:
-            try:
-                color = self._read_value()
-                self.hul[self.position] = color
-                rotation = self._read_value()
-                self._rotate(rotation)
-            except StopIteration:
-                return
+        while not self.ic.finished:
+            color = self._read_value()
+            self.hul[self.position] = color
+            rotation = self._read_value()
+            self._rotate(rotation)
 
 
 def puzzle1():

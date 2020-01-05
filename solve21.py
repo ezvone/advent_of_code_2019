@@ -1,32 +1,32 @@
 from input_reader import read_comma_separated_integers
-from intcode import IntcodeRunner
+from intcode import Intcode
 
 
 class SpringDroidProgrammer:
     def __init__(self):
-        self.ic = IntcodeRunner(read_comma_separated_integers('day21input.txt'))
+        self.ic = Intcode(read_comma_separated_integers('day21input.txt'))
+        self.ic.start()
 
     def read_prompt(self):
         rtn = ''
-        ch = self.ic.communicate()
+        ch = self.ic.read_output()
         while ch != 10:
             rtn += chr(ch)
-            ch = self.ic.communicate()
+            ch = self.ic.read_output()
         return rtn
 
     def write_command(self, command):
         for ch in command:
-            self.ic.communicate(ord(ch))
-        self.ic.communicate(10)
+            self.ic.write_input(ord(ch))
+        self.ic.write_input(10)
 
     def read_output(self):
         while not self.ic.finished:
-            ch = self.ic.communicate()
-            if ch is not None:
-                if ch < 256:
-                    pass
-                else:
-                    return ch
+            ch = self.ic.read_output()
+            if ch < 256:
+                pass
+            else:
+                return ch
 
     def program(self, source):
         self.read_prompt()

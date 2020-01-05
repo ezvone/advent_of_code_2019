@@ -1,17 +1,17 @@
-from intcode import IntcodeRunner
+from intcode import Intcode
 from input_reader import read_comma_separated_integers
 
 
 class DiagnosticProgram:
     def __init__(self):
-        self.ic = IntcodeRunner(read_comma_separated_integers('day5input.txt'))
+        self.ic = Intcode(read_comma_separated_integers('day5input.txt'))
 
     def run(self, system_id):
-        self.ic.communicate(system_id)
+        self.ic.start()
+        self.ic.write_input(system_id)
 
         while not self.ic.finished:
-            if None is not (output_value := self.ic.communicate()):
-                yield output_value
+            yield self.ic.read_output()
 
 
 def puzzle1():
