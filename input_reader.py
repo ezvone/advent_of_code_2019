@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple, List, Dict
+from typing import Union, Iterable, Tuple, List, Dict, Set
 
 import re
 import pathlib
@@ -86,6 +86,13 @@ def read_labyrinth(filename : FilenameOrTestInput) -> Dict[Coord2D, str]:
         for x, ch in enumerate(line):
             rtn[x, y] = ch
     return rtn
+
+
+def read_bugs_coordinates(filename : FilenameOrTestInput) -> Set[Coord2D]:
+    return set(
+        (x, y)
+        for (x, y), value in read_labyrinth(filename).items()
+        if value == '#')
 
 
 def read_digits(filename : FilenameOrTestInput) -> Iterable[int]:
